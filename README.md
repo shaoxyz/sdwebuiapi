@@ -1,3 +1,7 @@
+# note
+Note that this repo is for my personal use only and has made some minor changes based on the original project. 
+Origin repo: https://github.com/mix1009/sdwebuiapi
+
 # sdwebuiapi
 API client for AUTOMATIC1111/stable-diffusion-webui
 
