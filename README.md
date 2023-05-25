@@ -276,9 +276,17 @@ api.get_hypernetworks()
 api.get_face_restorers()
 api.get_realesrgan_models()
 api.get_prompt_styles()
-api.get_artist_categories()
-api.get_artists()
+api.get_artist_categories() # deprecated ?
+api.get_artists() # deprecated ?
 api.get_progress()
+api.get_embeddings()
+api.get_cmd_flags()
+api.get_scripts()
+api.get_memory()
+
+# misc apis
+api.interrupt()
+api.skip()
 ```
 
 ### Utility methods
@@ -403,4 +411,7 @@ r2.images[2]
 ![cn5](https://user-images.githubusercontent.com/1288793/222315859-e6b6286e-854d-40c1-a516-5a08c827c49a.png)
 
 
-
+```
+r = api.controlnet_detect(images=[img], module='canny')
+r.image
+```
