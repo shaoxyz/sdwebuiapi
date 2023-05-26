@@ -1,10 +1,10 @@
 import base64
 import io
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum
-import subprocess
 from typing import Any, Dict, List
 
 import requests
@@ -131,16 +131,17 @@ def raw_b64_img(image: Image):
 
 
 class WebUIApi:
-
     has_controlnet = False
 
-    def __init__(self,
-                 host='127.0.0.1',
-                 port=7860,
-                 baseurl=None,
-                 sampler='Euler a',
-                 steps=20,
-                 use_https=False):
+    def __init__(
+        self,
+        host="127.0.0.1",
+        port=7860,
+        baseurl=None,
+        sampler="Euler a",
+        steps=20,
+        use_https=False,
+    ):
         if baseurl is None:
             if use_https:
                 baseurl = f"https://{host}:{port}/sdapi/v1"
@@ -158,7 +159,7 @@ class WebUIApi:
     def check_controlnet(self):
         try:
             scripts = self.get_scripts()
-            self.has_controlnet = 'controlnet m2m' in scripts['txt2img']
+            self.has_controlnet = "controlnet m2m" in scripts["txt2img"]
         except:
             pass
 
@@ -427,7 +428,7 @@ class WebUIApi:
         elif self.has_controlnet:
             payload["alwayson_scripts"]["ControlNet"] = {"args": []}
 
-        response = self.session.post(url=f'{self.baseurl}/img2img', json=payload)
+        response = self.session.post(url=f"{self.baseurl}/img2img", json=payload)
         return self._to_api_result(response)
 
     def extra_single_image(
@@ -537,15 +538,14 @@ class WebUIApi:
 
         response = self.session.post(url=f"{self.baseurl}/interrogate", json=payload)
         return self._to_api_result(response)
-    
+
     def interrupt(self):
-        response = self.session.post(url=f'{self.baseurl}/interrupt')
-        return response.json()
-    
-    def skip(self):
-        response = self.session.post(url=f'{self.baseurl}/skip')
+        response = self.session.post(url=f"{self.baseurl}/interrupt")
         return response.json()
 
+    def skip(self):
+        response = self.session.post(url=f"{self.baseurl}/skip")
+        return response.json()
 
     def get_options(self):
         response = self.session.get(url=f"{self.baseurl}/options")
@@ -556,7 +556,7 @@ class WebUIApi:
         return response.json()
 
     def get_cmd_flags(self):
-        response = self.session.get(url=f'{self.baseurl}/cmd-flags')
+        response = self.session.get(url=f"{self.baseurl}/cmd-flags")
         return response.json()
 
     def get_progress(self):
@@ -606,16 +606,19 @@ class WebUIApi:
     def refresh_checkpoints(self):
         response = self.session.post(url=f"{self.baseurl}/refresh-checkpoints")
         return response.json()
+
     def get_scripts(self):
-        response = self.session.get(url=f'{self.baseurl}/scripts')
+        response = self.session.get(url=f"{self.baseurl}/scripts")
         return response.json()
-    def get_embeddings(self):        
-        response = self.session.get(url=f'{self.baseurl}/embeddings')
+
+    def get_embeddings(self):
+        response = self.session.get(url=f"{self.baseurl}/embeddings")
         return response.json()
-    def get_memory(self):        
-        response = self.session.get(url=f'{self.baseurl}/memory')
+
+    def get_memory(self):
+        response = self.session.get(url=f"{self.baseurl}/memory")
         return response.json()
-    
+
     def get_endpoint(self, endpoint, baseurl):
         if baseurl:
             return f"{self.baseurl}/{endpoint}"
@@ -646,10 +649,12 @@ class WebUIApi:
         return r["model_list"]
 
     def controlnet_module_list(self):
-        r = self.custom_get('controlnet/module_list')
-        return r['module_list']
+        r = self.custom_get("controlnet/module_list")
+        return r["module_list"]
 
-    def controlnet_detect(self, images, module="none", processor_res=512, threshold_a=64, threshold_b=64):
+    def controlnet_detect(
+        self, images, module="none", processor_res=512, threshold_a=64, threshold_b=64
+    ):
         input_images = [b64_img(x) for x in images]
         payload = {
             "controlnet_module": module,
@@ -658,9 +663,9 @@ class WebUIApi:
             "controlnet_threshold_a": threshold_a,
             "controlnet_threshold_b": threshold_b,
         }
-        r = self.custom_post('controlnet/detect', payload=payload)
+        r = self.custom_post("controlnet/detect", payload=payload)
         return r
-        
+
     def util_get_model_names(self):
         return sorted([x["title"] for x in self.get_sd_models()])
 
