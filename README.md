@@ -138,6 +138,16 @@ result4.images[1]
 ```
 ![extra_batch_images_2](https://user-images.githubusercontent.com/1288793/200459542-aa8547a0-f6db-436b-bec1-031a93a7b1d4.jpg)
 
+### Async API support
+txt2img, img2img, extra_single_image, extra_batch_images support async api call with use_async=True parameter. You need asyncio, aiohttp packages installed.
+```
+result = await api.txt2img(prompt="cute kitten",
+                    seed=1001,
+                    use_async=True
+                    )
+result.image
+```
+
 ### Scripts support
 Scripts from AUTOMATIC1111's Web UI are supported, but there aren't official models that define a script's interface.
 
@@ -373,7 +383,7 @@ img
 ![cn1](https://user-images.githubusercontent.com/1288793/222315754-43c6dc8c-2a62-4a31-b51a-f68523118e0d.png)
 
 ```
-# txt2img with ControlNet (used 1.0 but also supports 2.0)
+# txt2img with ControlNet (used 1.0 but also supports 1.1)
 unit1 = webuiapi.ControlNetUnit(input_image=img, module='canny', model='control_canny-fp16 [e3fe7712]')
 
 r = api.txt2img(prompt="photo of a beautiful girl", controlnet_units=[unit1])
@@ -384,7 +394,7 @@ r.image
 
 
 ```
-# img2img with multiple ControlNets (used 1.0 but also supports 2.0)
+# img2img with multiple ControlNets (used 1.0 but also supports 1.1)
 unit1 = webuiapi.ControlNetUnit(input_image=img, module='canny', model='control_canny-fp16 [e3fe7712]')
 unit2 = webuiapi.ControlNetUnit(input_image=img, module='depth', model='control_depth-fp16 [400750f6]', weight=0.5)
 

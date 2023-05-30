@@ -194,6 +194,34 @@ class WebUIApi:
 
         return WebUIApiResult(images, parameters, info)
 
+    async def _to_api_result_async(self, response):
+        if response.status != 200:
+            raise RuntimeError(response.status, await response.text)
+
+        r = await response.json()
+        images = []
+        if "images" in r.keys():
+            images = [Image.open(io.BytesIO(base64.b64decode(i))) for i in r["images"]]
+        elif "image" in r.keys():
+            images = [Image.open(io.BytesIO(base64.b64decode(r["image"])))]
+
+        info = ""
+        if "info" in r.keys():
+            try:
+                info = json.loads(r["info"])
+            except:
+                info = r["info"]
+        elif "html_info" in r.keys():
+            info = r["html_info"]
+        elif "caption" in r.keys():
+            info = r["caption"]
+
+        parameters = ""
+        if "parameters" in r.keys():
+            parameters = r["parameters"]
+
+        return WebUIApiResult(images, parameters, info)
+
     def txt2img(
         self,
         enable_hr=False,
@@ -239,6 +267,7 @@ class WebUIApi:
         controlnet_units: List[ControlNetUnit] = [],
         sampler_index=None,  # deprecated: use sampler_name
         use_deprecated_controlnet=False,
+        use_async=False,
         *args,
         **kwargs,
     ):
@@ -296,7 +325,9 @@ class WebUIApi:
 
         if use_deprecated_controlnet and controlnet_units and len(controlnet_units) > 0:
             payload["controlnet_units"] = [x.to_dict() for x in controlnet_units]
-            return self.custom_post("controlnet/txt2img", payload=payload)
+            return self.custom_post(
+                "controlnet/txt2img", payload=payload, use_async=use_async
+            )
 
         if controlnet_units and len(controlnet_units) > 0:
             payload["alwayson_scripts"]["ControlNet"] = {
@@ -306,8 +337,25 @@ class WebUIApi:
             # workaround : if not passed, webui will use previous args!
             payload["alwayson_scripts"]["ControlNet"] = {"args": []}
 
-        response = self.session.post(url=f"{self.baseurl}/txt2img", json=payload)
-        return self._to_api_result(response)
+        return self.post_and_get_api_result(
+            f"{self.baseurl}/txt2img", payload, use_async
+        )
+
+    def post_and_get_api_result(self, url, json, use_async):
+        if use_async:
+            import asyncio
+
+            return asyncio.ensure_future(self.async_post(url=url, json=json))
+        else:
+            response = self.session.post(url=url, json=json)
+            return self._to_api_result(response)
+
+    async def async_post(self, url, json):
+        import aiohttp
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=json) as response:
+                return await self._to_api_result_async(response)
 
     def img2img(
         self,
@@ -357,6 +405,7 @@ class WebUIApi:
         alwayson_scripts={},
         controlnet_units: List[ControlNetUnit] = [],
         use_deprecated_controlnet=False,
+        use_async=False,
         *args,
         **kwargs,
     ):
@@ -419,7 +468,9 @@ class WebUIApi:
 
         if use_deprecated_controlnet and controlnet_units and len(controlnet_units) > 0:
             payload["controlnet_units"] = [x.to_dict() for x in controlnet_units]
-            return self.custom_post("controlnet/img2img", payload=payload)
+            return self.custom_post(
+                "controlnet/img2img", payload=payload, use_async=use_async
+            )
 
         if controlnet_units and len(controlnet_units) > 0:
             payload["alwayson_scripts"]["ControlNet"] = {
@@ -428,8 +479,9 @@ class WebUIApi:
         elif self.has_controlnet:
             payload["alwayson_scripts"]["ControlNet"] = {"args": []}
 
-        response = self.session.post(url=f"{self.baseurl}/img2img", json=payload)
-        return self._to_api_result(response)
+        return self.post_and_get_api_result(
+            f"{self.baseurl}/img2img", payload, use_async
+        )
 
     def extra_single_image(
         self,
@@ -447,6 +499,7 @@ class WebUIApi:
         upscaler_2="None",
         extras_upscaler_2_visibility=0,
         upscale_first=False,
+        use_async=False,
     ):
         payload = {
             "resize_mode": resize_mode,
@@ -465,10 +518,9 @@ class WebUIApi:
             "image": b64_img(image),
         }
 
-        response = self.session.post(
-            url=f"{self.baseurl}/extra-single-image", json=payload
+        return self.post_and_get_api_result(
+            f"{self.baseurl}/extra-single-image", payload, use_async
         )
-        return self._to_api_result(response)
 
     def extra_batch_images(
         self,
@@ -487,6 +539,7 @@ class WebUIApi:
         upscaler_2="None",
         extras_upscaler_2_visibility=0,
         upscale_first=False,
+        use_async=False,
     ):
         if name_list is not None:
             if len(name_list) != len(images):
@@ -516,10 +569,9 @@ class WebUIApi:
             "imageList": image_list,
         }
 
-        response = self.session.post(
-            url=f"{self.baseurl}/extra-batch-images", json=payload
+        return self.post_and_get_api_result(
+            f"{self.baseurl}/extra-batch-images", payload, use_async
         )
-        return self._to_api_result(response)
 
     # XXX 500 error (2022/12/26)
     def png_info(self, image):
@@ -595,11 +647,11 @@ class WebUIApi:
         response = self.session.get(url=f"{self.baseurl}/prompt-styles")
         return response.json()
 
-    def get_artist_categories(self):
+    def get_artist_categories(self):  # deprecated ?
         response = self.session.get(url=f"{self.baseurl}/artist-categories")
         return response.json()
 
-    def get_artists(self):
+    def get_artists(self):  # deprecated ?
         response = self.session.get(url=f"{self.baseurl}/artists")
         return response.json()
 
@@ -635,10 +687,15 @@ class WebUIApi:
         response = self.session.get(url=url)
         return response.json()
 
-    def custom_post(self, endpoint, payload={}, baseurl=False):
+    def custom_post(self, endpoint, payload={}, baseurl=False, use_async=False):
         url = self.get_endpoint(endpoint, baseurl)
-        response = self.session.post(url=url, json=payload)
-        return self._to_api_result(response)
+        if use_async:
+            import asyncio
+
+            return asyncio.ensure_future(self.async_post(url=url, json=payload))
+        else:
+            response = self.session.post(url=url, json=payload)
+            return self._to_api_result(response)
 
     def controlnet_version(self):
         r = self.custom_get("controlnet/version")
