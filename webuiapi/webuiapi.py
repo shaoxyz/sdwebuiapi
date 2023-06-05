@@ -60,7 +60,7 @@ class ControlNetUnit:
         module: str = "none",
         model: str = "None",
         weight: float = 1.0,
-        resize_mode: str = "Resize and Fill",
+        resize_mode: str = "Crop and Resize",
         lowvram: bool = False,
         processor_res: int = 512,
         threshold_a: float = 64,
