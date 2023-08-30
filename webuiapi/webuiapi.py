@@ -1030,3 +1030,28 @@ class ControlNetInterface:
     def model_list(self):
         r = self.api.custom_get("controlnet/model_list")
         return r["model_list"]
+
+
+class DeforumInterface:
+    def __init__(self, webuiapi) -> None:
+        self.api = webuiapi
+
+    def version(self):
+        return self.api.custom_get("deforum/version")
+
+    def api_version(self):
+        return self.api.custom_get("deforum/api_version")
+
+    def run(self, deforum_settings: dict):
+        endpoint = "deforum_api/batches"
+        url = self.api.get_endpoint(endpoint, baseurl=False)
+        resp = self.api.session.post(
+            url,
+            json={
+                "deforum_settings": deforum_settings,
+            },
+        )
+        return resp.json()
+
+    def get_job(self, id):
+        return self.api.custom_get(f"deforum_api/jobs/{id}")

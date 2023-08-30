@@ -1,6 +1,7 @@
 from .webuiapi import (
     ControlNetInterface,
     ControlNetUnit,
+    DeforumInterface,
     HiResUpscaler,
     InstructPix2PixInterface,
     ModelKeywordInterface,
@@ -26,4 +27,5 @@ __all__ = [
     "InstructPix2PixInterface",
     "ControlNetInterface",
     "ControlNetUnit",
+    "DeforumInterface",
 ]
